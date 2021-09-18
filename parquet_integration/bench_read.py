@@ -4,8 +4,13 @@ import io
 import pyarrow.parquet
 
 
-def bench(log2_size: int, datatype: str):
-    with open(f"fixtures/pyarrow3/v1/benches_{2**log2_size}.parquet", "rb") as f:
+def bench(log2_size: int, datatype: str, dict: bool = False):
+    if dict:
+        path = f"fixtures/pyarrow3/v1/dict/benches_{2**log2_size}.parquet"
+    else:
+        path = f"fixtures/pyarrow3/v1/benches_{2**log2_size}.parquet"
+
+    with open(path, "rb") as f:
         data = f.read()
     data = io.BytesIO(data)
 
@@ -16,8 +21,12 @@ def bench(log2_size: int, datatype: str):
     microseconds = seconds * 1000 * 1000
     print(f"read {datatype} 2^{log2_size}     time: {microseconds:.2f} us")
 
-#for i in range(10, 22, 2):
-#    bench(i, "int64")
+
+for i in range(10, 22, 2):
+    bench(i, "string", True)
+
+for i in range(10, 22, 2):
+    bench(i, "int64")
 
 for i in range(10, 22, 2):
     bench(i, "string")

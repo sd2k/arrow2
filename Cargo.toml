@@ -77,6 +77,7 @@ criterion = "0.3"
 flate2 = "1"
 doc-comment = "0.3"
 crossbeam-channel = "0.5.1"
+parquet = { version = "5.0.0" }
 
 [package.metadata.docs.rs]
 features = ["full"]
@@ -189,6 +190,10 @@ harness = false
 
 [[bench]]
 name = "read_parquet"
+harness = false
+
+[[bench]]
+name = "read_parquet_arrow"
 harness = false
 
 [[bench]]

@@ -179,3 +179,4 @@ def case_benches(size):
 # for read benchmarks
 for i in range(3 + 10, 3 + 22, 2):
     write_pyarrow(case_benches, 2 ** i, 1)  # V1
+    write_pyarrow(case_benches, 2 ** i, 1, True)  # V1

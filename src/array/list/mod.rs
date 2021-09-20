@@ -69,6 +69,33 @@ impl<O: Offset> ListArray<O> {
         }
     }
 
+    pub fn slice(&self, offset: usize, length: usize) -> Self {
+        let validity = self.validity.clone().map(|x| x.slice(offset, length));
+        let offsets = self.offsets.clone().slice(offset, length + 1);
+        Self {
+            data_type: self.data_type.clone(),
+            offsets,
+            values: self.values.clone(),
+            validity,
+            offset: self.offset + offset,
+        }
+    }
+
+    /// Sets the validity bitmap on this [`ListArray`].
+    /// # Panic
+    /// This function panics iff `validity.len() != self.len()`.
+    pub fn with_validity(&self, validity: Option<Bitmap>) -> Self {
+        if matches!(&validity, Some(bitmap) if bitmap.len() != self.len()) {
+            panic!("validity should be as least as large as the array")
+        }
+        let mut arr = self.clone();
+        arr.validity = validity;
+        arr
+    }
+}
+
+// Accessors
+impl<O: Offset> ListArray<O> {
     /// Returns the element at index `i`
     #[inline]
     pub fn value(&self, i: usize) -> Box<dyn Array> {
@@ -96,16 +123,10 @@ impl<O: Offset> ListArray<O> {
         self.values.slice(offset.to_usize(), length)
     }
 
-    pub fn slice(&self, offset: usize, length: usize) -> Self {
-        let validity = self.validity.clone().map(|x| x.slice(offset, length));
-        let offsets = self.offsets.clone().slice(offset, length + 1);
-        Self {
-            data_type: self.data_type.clone(),
-            offsets,
-            values: self.values.clone(),
-            validity,
-            offset: self.offset + offset,
-        }
+    /// The optional validity.
+    #[inline]
+    pub fn validity(&self) -> Option<&Bitmap> {
+        self.validity.as_ref()
     }
 
     #[inline]
@@ -116,18 +137,6 @@ impl<O: Offset> ListArray<O> {
     #[inline]
     pub fn values(&self) -> &Arc<dyn Array> {
         &self.values
-    }
-
-    /// Sets the validity bitmap on this [`ListArray`].
-    /// # Panic
-    /// This function panics iff `validity.len() != self.len()`.
-    pub fn with_validity(&self, validity: Option<Bitmap>) -> Self {
-        if matches!(&validity, Some(bitmap) if bitmap.len() != self.len()) {
-            panic!("validity should be as least as large as the array")
-        }
-        let mut arr = self.clone();
-        arr.validity = validity;
-        arr
     }
 }
 

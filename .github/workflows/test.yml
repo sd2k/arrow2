@@ -67,7 +67,7 @@ jobs:
           rustup default stable
           rustup component add rustfmt
       - name: Setup parquet files
-        run: | 
+        run: |
           apt update && apt install python3-pip python3-venv -y -q
           python3 -m venv venv
           venv/bin/pip install pip --upgrade
@@ -158,12 +158,41 @@ jobs:
       - name: Run
         env:
           RUST_BACKTRACE: full
-          RUST_LOG: 'trace'
+          RUST_LOG: "trace"
         # --skip io: miri can't handle opening of files, so we skip those
         run: |
           cargo miri setup
           cargo clean
           cargo miri test --features full -- --skip io::parquet --skip io::ipc
+
+  miri-checks-custom-allocator:
+    name: MIRI with custom allocator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-miri-${{ hashFiles('**/Cargo.lock') }}
+      - name: Setup toolchain
+        run: |
+          rustup toolchain install nightly-2021-07-03
+          rustup default nightly-2021-07-03
+          rustup component add rustfmt miri
+      - name: Run
+        env:
+          RUST_BACKTRACE: full
+          RUST_LOG: "trace"
+        # --skip io: miri can't handle opening of files, so we skip those
+        run: |
+          cargo miri setup
+          cargo clean
+          cargo miri test --features full,cache_aligned -- --skip io::parquet --skip io::ipc
 
   coverage:
     name: Coverage
@@ -185,7 +214,7 @@ jobs:
           # this key is not equal because coverage uses different compilation flags.
           key: ${{ runner.os }}-amd64-target-coverage-cache-stable-
       - name: Setup parquet files
-        run: | 
+        run: |
           apt update && apt install python3-pip python3-venv -y -q
           python3 -m venv venv
           venv/bin/pip install pip --upgrade
@@ -198,6 +227,7 @@ jobs:
 
           # 2020-11-15: There is a cargo-tarpaulin regression in 0.17.0
           # see https://github.com/xd009642/tarpaulin/issues/618
+          cargo tarpaulin --features cache_aligned --out Xml
           cargo install --version 0.16.0 cargo-tarpaulin
           cargo tarpaulin --features full --out Xml
       - name: Report coverage
